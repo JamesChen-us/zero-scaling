@@ -39,10 +39,10 @@ pip install pandas
 #### Get Cluster Information
 ```bash
 # Get the node's internal IP address
-export IP=$(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
+IP=$(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
 
 # Get Kourier's HTTP2 nodePort
-export PORT=$(kubectl get svc kourier -n kourier-system -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+PORT=$(kubectl get svc kourier -n kourier-system -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
 ```
 
 #### Update Configuration
@@ -51,6 +51,9 @@ export PORT=$(kubectl get svc kourier -n kourier-system -o jsonpath='{.spec.port
 3. Apply the configuration:
 ```bash
 kubectl apply -f zero-scaling/configuration.yaml
+
+kubectl patch svc kourier -n kourier-system -p '{"spec": {"type": "NodePort"}}'
+kubectl patch svc kourier -n kourier-system -p '{"spec": {"type": "LoadBalancer"}}'
 ```
 
 ### 5. Verify Setup
@@ -63,7 +66,17 @@ All services should show `Ready: True`
 
 #### Validate Frontend Access
 ```bash
-curl -H "Host: kn-frontend.default.127.0.0.1.sslip.io" http://$IP:$PORT -v
+curl -H "Host: kn-frontend.default.127.0.0.1.sslip.io" http://155.98.36.9:31732 -v
+```
+
+#### Installing Kubernetes Metrics Server
+```bash
+# https://github.com/kubernetes-sigs/metrics-server
+# https://gist.github.com/NileshGule/8f772cf04ea6ae9c76d3f3e9186165c2
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl -n kube-system edit deploy metrics-server
+
+kubectl top pod
 ```
 
 ## Project Structure

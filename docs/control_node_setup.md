@@ -88,36 +88,46 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ### 6. Install Calico Network Plugin
 ```bash
-curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/calico.yaml -O
+curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/calico.yaml -O
 kubectl apply -f calico.yaml
 ```
 
-### 7. Install Knative
+### 7. Installing Knative Components
 ```bash
-# Install Kind (Kubernetes in Docker)
-[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-amd64
-chmod +x ./kind
-sudo mv ./kind /usr/local/bin/kind
+# Install Knative CLI
+curl -LO https://github.com/knative/client/releases/download/knative-v1.16.0/kn-linux-amd64
+mv kn-linux-amd64 kn
+chmod +x kn
+sudo mv kn /usr/local/bin
 
 # Setup kubectl autocompletion
 kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
 sudo chmod a+r /etc/bash_completion.d/kubectl
 source ~/.bashrc
 
-# Install Knative CLI
-curl -LO https://github.com/knative/client/releases/download/knative-v1.15.0/kn-linux-amd64
-mv kn-linux-amd64 kn
-chmod +x kn
-sudo mv kn /usr/local/bin
+# Install Knative Serving CRDs
+# https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/#verifying-image-signatures
+kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.16.0/serving-crds.yaml
 
-# Install Knative Quickstart
-curl -LO https://github.com/knative-extensions/kn-plugin-quickstart/releases/download/knative-v1.15.0/kn-quickstart-linux-amd64
-mv kn-quickstart-linux-amd64 kn-quickstart
-chmod +x kn-quickstart
-sudo mv kn-quickstart /usr/local/bin
+kubectl apply -f zero-scaling/configuration.yaml
 
-# Initialize Knative
-sudo kn quickstart kind
+# Install Knative Serving core
+kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.16.0/serving-core.yaml
+
+# Install Kourier controller
+kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.16.0/kourier.yaml
+
+# Configure Kourier
+kubectl patch configmap/config-network \
+  --namespace knative-serving \
+  --type merge \
+  --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
+
+# Configure Domain Configuration
+kubectl patch configmap/config-domain \
+  --namespace knative-serving \
+  --type merge \
+  --patch '{"data":{"127.0.0.1.sslip.io":""}}'
 ```
 
 ## Network Architecture

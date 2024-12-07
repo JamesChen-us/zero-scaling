@@ -10,20 +10,20 @@ import logging
 import json
 import os
 
-IP = os.getenv('IP')  
-PORT = os.getenv('PORT', '80') 
-
 
 from collections import defaultdict
 def create_function_mapping(trace_file_path, desired_tasks):
     """
-    Creates two structures:
-    1. Sorted array of (app, function, start_time) tuples
-    2. Dictionary mapping (app, function) -> task_name
+    Creates function mapping ensuring minimum representation for all tasks.
+    
+    Args:
+        trace_file_path (str): Path to trace file
+        desired_tasks (dict): Mapping of task_name -> desired_weight
     """
     func_counts = {}
     trace_events = []
     
+    # Read and process trace file
     with open(trace_file_path, 'r') as f:
         next(f)  # Skip header
         for line in f:
@@ -32,12 +32,13 @@ def create_function_mapping(trace_file_path, desired_tasks):
             duration = float(duration)
             start_time = end_time - duration
             
-            if end_time <= 1000:  # First 5 minutes
+            if end_time <= 4000:
                 func_counts[func] = func_counts.get(func, 0) + 1
                 trace_events.append((app, func, start_time))
     
     sorted_events = sorted(trace_events, key=lambda x: x[2])
     
+    # Sort functions by call frequency
     sorted_funcs = sorted(
         [(func, count) for func, count in func_counts.items()],
         key=lambda x: x[1],
@@ -45,52 +46,96 @@ def create_function_mapping(trace_file_path, desired_tasks):
     )
     
     total_weight = sum(desired_tasks.values())
-    sorted_tasks = sorted(
-        [(task, count) for task, count in desired_tasks.items()],
-        key=lambda x: x[1],
-        reverse=True
-    )
+    total_function_count = sum(func_counts.values())
     
+    # Calculate target calls for each task
+    task_targets = {
+        task: (weight / total_weight) * total_function_count 
+        for task, weight in desired_tasks.items()
+    }
+    
+    # Initialize mapping structures
     function_mapping = {}
-    current_func_idx = 0
+    task_current_counts = defaultdict(int)
+    unassigned_funcs = sorted_funcs.copy()
     
-    for task, weight in sorted_tasks:
-        target_percentage = weight / total_weight
-        target_calls = int(len(trace_events) * target_percentage + 0.5)
+    # First pass: ensure minimum representation for all tasks
+    min_target_ratio = 0.3  # Ensure at least 30% of target for each task
+    for task, target in task_targets.items():
+        min_required = target * min_target_ratio
         
-        calls_mapped = 0
-        while calls_mapped < target_calls and current_func_idx < len(sorted_funcs):
-            func = sorted_funcs[current_func_idx][0]
-            count = sorted_funcs[current_func_idx][1]
-            current_func_idx += 1
-            calls_mapped += count
+        while task_current_counts[task] < min_required and unassigned_funcs:
+            # Find the smallest function that won't exceed target
+            best_func_idx = -1
+            for i, (func, count) in enumerate(unassigned_funcs):
+                if task_current_counts[task] + count <= target * 1.2:
+                    best_func_idx = i
+                    break
             
-            # For each function, map all its appearances in the trace
+            if best_func_idx == -1:  # No suitable function found
+                break
+                
+            # Assign chosen function
+            func, count = unassigned_funcs.pop(best_func_idx)
             for app, f, _ in trace_events:
                 if f == func:
                     function_mapping[(app, f)] = task
+            task_current_counts[task] += count
+    
+    # Second pass: distribute remaining functions to minimize overall deviation
+    while unassigned_funcs:
+        func, count = unassigned_funcs.pop(0)
+        
+        # Calculate which task would benefit most (minimize max deviation)
+        best_task = None
+        min_max_deviation = float('inf')
+        
+        for task in task_targets:
+            # Calculate deviations if we assign to this task
+            temp_counts = task_current_counts.copy()
+            temp_counts[task] += count
+            
+            # Calculate maximum deviation across all tasks
+            max_deviation = max(
+                abs(temp_counts[t] / task_targets[t] - 1)
+                for t in task_targets
+            )
+            
+            if max_deviation < min_max_deviation:
+                min_max_deviation = max_deviation
+                best_task = task
+        
+        # Assign function to chosen task
+        for app, f, _ in trace_events:
+            if f == func:
+                function_mapping[(app, f)] = best_task
+        task_current_counts[best_task] += count
     
     # Print analysis
     print("\nMapping Analysis:")
-    task_counts = defaultdict(int)
+    final_counts = defaultdict(int)
     for app, func, _ in sorted_events:
         if (app, func) in function_mapping:
             task = function_mapping[(app, func)]
-            task_counts[task] += 1
+            final_counts[task] += 1
     
-    for task, count in task_counts.items():
+    for task, target in task_targets.items():
+        actual = final_counts[task]
+        deviation = (actual - target) / target * 100 if target > 0 else float('inf')
         print(f"\n{task}:")
-        print(f"Actual calls: {count}")
+        print(f"Actual calls: {actual}")
+        print(f"Expected: {target:.2f}")
+        print(f"Deviation: {deviation:.1f}%")
         print(f"Target weight: {desired_tasks[task]}/{total_weight}")
-    
+
     return {
-        'sorted_events': sorted_events,  # List of (app, func, start_time)
-        'function_mapping': function_mapping  # Dict of (app, func) -> task_name
+        'sorted_events': sorted_events,
+        'function_mapping': function_mapping
     }
 
 # Configuration
 host = "kn-frontend.default.127.0.0.1.sslip.io"
-url = f"http://{IP}:{PORT}"
+url = f"http://128.110.96.104:31470"
 print(url)
 products = [
     '0PUK6V6EV0', '1YMWWN1N4O', '2ZYFJ3GM2N', '66VCHSJNUP',
@@ -128,20 +173,25 @@ class TraceReplayTaskSet(TaskSet):
         self.current_idx = 0
     
     def index(l):
+        url = f"http://128.110.96.104:31470"
         l.client.get(url + "/", headers={"host": host})
 
     def setCurrency(l):
+        url = f"http://128.110.96.104:31470"
         currencies = ['EUR', 'USD', 'JPY', 'CAD']
         l.client.post(url + "/setCurrency",
             {'currency_code': random.choice(currencies)}, headers={"host": host})
 
     def browseProduct(l):
+        url = f"http://128.110.96.104:31470"
         l.client.get(url + "/product/" + random.choice(products), headers={"host": host})
 
     def viewCart(l):
+        url = f"http://128.110.96.104:31470"
         l.client.get(url + "/cart", headers={"host": host})
 
     def addToCart(l):
+        url = f"http://128.110.96.104:31470"
         product = random.choice(products)
         l.client.get(url + "/product/" + product, headers={"host": host})
         l.client.post(url + "/cart", {
@@ -149,7 +199,8 @@ class TraceReplayTaskSet(TaskSet):
             'quantity': random.choice([1,2,3,4,5,10])}, headers={"host": host})
 
     def checkout(l):
-        addToCart(l)
+        url = f"http://128.110.96.104:31470"
+        l.addToCart()
         l.client.post(url + "/cart/checkout", {
             'email': 'someone@example.com',
             'street_address': '1600 Amphitheatre Parkway',
@@ -171,28 +222,17 @@ class TraceReplayTaskSet(TaskSet):
         current_time = time.time() - self.global_start_time
         app, func, target_time = self.trace_data[self.current_idx]
         
-        # If it's not time for the next event, wait
-        if current_time < target_time:
-            time.sleep(target_time - current_time)
-        
         # Execute the corresponding task
         if (app, func) in self.function_mapping:
             task_name = self.function_mapping[(app, func)]
             if hasattr(self, task_name):
                 getattr(self, task_name)()
-                # getattr(self, task_name)()
-                # getattr(self, task_name)()
-                # getattr(self, task_name)()
-                # getattr(self, task_name)()
-                # getattr(self, task_name)()
-                # getattr(self, task_name)()
-                # getattr(self, task_name)()
         
         self.current_idx = (self.current_idx + 1) % len(self.trace_data)
 
 class WebsiteUser(HttpUser):
     tasks = [TraceReplayTaskSet]
-    wait_time = between(0, 0)  # No wait time as timing is controlled by trace
+    wait_time = between(0, 0)   # No wait time as timing is controlled by trace
 
 # Stats collection
 stat_file = open('stats.csv', 'w')

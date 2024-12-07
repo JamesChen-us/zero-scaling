@@ -59,7 +59,7 @@ top
 
 ### Interactive Locust Test
 ```bash
-locust -H kn-frontend.default.127.0.0.1.sslip.io -f test.py --processes -1
+locust -H kn-frontend.default.127.0.0.1.sslip.io -f locustfile.py --processes -1
 ```
 **Key Parameters:**
 - `-H`: Host to test
@@ -74,7 +74,7 @@ locust -H kn-frontend.default.127.0.0.1.sslip.io -f test.py --processes -1
 
 ### Headless Load Test
 ```bash
-locust --headless --users 100 --spawn-rate 10 -H kn-frontend.default.127.0.0.1.sslip.io -f zero-scaling/locust.py
+locust --headless --users 100 --spawn-rate 10 -H kn-frontend.default.127.0.0.1.sslip.io -f zero-scaling/locustfile.py
 ```
 **Key Parameters:**
 - `--headless`: Run without web interface
@@ -166,4 +166,6 @@ locust --headless --users 100 --spawn-rate 10 --run-time 1h -H kn-frontend.defau
    - Review test script logic
    - Monitor error logs
 
-   
+   kubectl get pods -n knative-serving
+
+   lscpu
