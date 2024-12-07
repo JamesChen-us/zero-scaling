@@ -59,7 +59,7 @@ top
 
 ### Interactive Locust Test
 ```bash
-locust -H kn-frontend.default.127.0.0.1.sslip.io -f locustfile.py --processes -1
+locust -H kn-frontend.default.127.0.0.1.sslip.io -f zero-scaling/locustfile.py --processes -1
 ```
 **Key Parameters:**
 - `-H`: Host to test
@@ -90,36 +90,10 @@ locust --headless --users 100 --spawn-rate 10 -H kn-frontend.default.127.0.0.1.s
 - Performance benchmarking
 - Scalability testing
 
-## Common Parameter Combinations
-
-### Light Load Test
-```bash
-locust --headless --users 50 --spawn-rate 5 -H kn-frontend.default.127.0.0.1.sslip.io -f test.py
-```
-- Good for initial testing
-- Minimal resource usage
-- Quick feedback cycle
-
-### Heavy Load Test
-```bash
-locust --headless --users 500 --spawn-rate 20 -H kn-frontend.default.127.0.0.1.sslip.io -f test.py
-```
-- Stress testing
-- Performance limits testing
-- Scalability verification
-
-### Extended Duration Test
-```bash
-locust --headless --users 100 --spawn-rate 10 --run-time 1h -H kn-frontend.default.127.0.0.1.sslip.io -f test.py
-```
-- Stability testing
-- Memory leak detection
-- Long-term performance analysis
-
 ## Tips and Best Practices
 
 1. **Resource Monitoring**
-   - Always run `top` in a separate terminal during load tests
+   - Always run `kubectl top pod` in a separate terminal during load tests
    - Monitor pod status with `kubectl get pods`
    - Check service health with `kubectl get ksvc`
 

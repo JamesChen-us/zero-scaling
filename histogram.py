@@ -1,4 +1,7 @@
-import pandas as pd
+# Function Analysis and Visualization Script
+# This script analyzes function execution patterns from Azure function traces 
+# and creates visualizations for workload analysis
+
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
@@ -7,23 +10,35 @@ from datetime import datetime
 from locustfile import create_function_mapping
 
 def analyze_function_patterns(mapping_result):
+    """
+    Analyzes patterns in function execution data and generates visualizations
+    
+    Args:
+        mapping_result: Dictionary containing sorted events and function mappings
+        
+    Returns:
+        tuple: (matplotlib figure, metadata dictionary)
+    """
     sorted_events = mapping_result['sorted_events']
     function_mapping = mapping_result['function_mapping']
     
+    # Initialize statistics tracking for each task
     task_stats = defaultdict(lambda: {
-        'durations': [],
-        'requests_per_second': defaultdict(int),
-        'total_calls': 0,
-        'total_duration': 0
+        'durations': [],              # List of execution durations
+        'requests_per_second': defaultdict(int),  # Request count per second
+        'total_calls': 0,             # Total number of function calls
+        'total_duration': 0           # Total execution time
     })
     
-    # Process per-task stats
+    # Process each event and collect statistics
     for app, func, start_time, end_time, duration in sorted_events:
         if (app, func) in function_mapping:
             task_name = function_mapping[(app, func)]
             duration_sec = float(duration)
+            # Round timestamp to nearest second for grouping
             second = datetime.fromtimestamp(float(start_time)).replace(microsecond=0)
             
+            # Update statistics for this task
             stats = task_stats[task_name]
             stats['durations'].append(duration_sec)
             stats['requests_per_second'][second] += 1
@@ -34,22 +49,23 @@ def analyze_function_patterns(mapping_result):
         print("No mapped functions found in trace data")
         return None
     
-    # Process overall request timeline
+    # Calculate overall request timeline
     overall_requests = defaultdict(int)
     for _, _, start_time, _, _ in sorted_events:
         second = datetime.fromtimestamp(float(start_time)).replace(microsecond=0)
         overall_requests[second] += 1
     
+    # Prepare timeline data
     sorted_times = sorted(overall_requests.items())
     timestamps = [t for t, _ in sorted_times]
     counts = [c for _, c in sorted_times]
     
-    # Create figure with adjusted layout
+    # Setup visualization layout
     num_tasks = len(task_stats)
-    total_rows = num_tasks + 1  # Add one row for the timeline
+    total_rows = num_tasks + 1  # Add row for timeline
     fig = plt.figure(figsize=(15, 8 * total_rows))
     
-    # Create timeline plot at the top
+    # Create main timeline plot
     ax_timeline = fig.add_subplot(total_rows, 1, 1)
     ax_timeline.plot(timestamps, counts, '-', linewidth=2)
     ax_timeline.set_title('Overall Requests per Second Over Time')
@@ -57,15 +73,16 @@ def analyze_function_patterns(mapping_result):
     ax_timeline.set_ylabel('Number of Requests')
     plt.setp(ax_timeline.xaxis.get_majorticklabels(), rotation=45)
     
-    # Create task-specific plots
+    # Create individual plots for each task
     for idx, (task_name, stats) in enumerate(task_stats.items()):
         durations = stats['durations']
         requests = list(stats['requests_per_second'].values())
         
-        # Adjust subplot positions to account for timeline
+        # Create duration distribution plot
         ax1 = fig.add_subplot(total_rows, 2, 2*(idx + 1) + 1)
         create_duration_plot_on_axis(ax1, task_name, durations, stats)
         
+        # Create requests per second distribution plot
         ax2 = fig.add_subplot(total_rows, 2, 2*(idx + 1) + 2)
         create_requests_plot_on_axis(ax2, task_name, requests)
     
@@ -73,11 +90,21 @@ def analyze_function_patterns(mapping_result):
     return fig, {name: calc_task_metadata(stats) for name, stats in task_stats.items()}
 
 def create_duration_plot_on_axis(ax, task_name, durations, stats):
+    """
+    Creates a histogram of function execution durations
+    
+    Args:
+        ax: matplotlib axis object
+        task_name: Name of the task
+        durations: List of execution durations
+        stats: Dictionary containing task statistics
+    """
     sns.histplot(durations, bins=30, kde=True, ax=ax)
     ax.set_title(f'Duration Distribution - {task_name}')
     ax.set_xlabel('Duration (seconds)')
     ax.set_ylabel('Frequency')
     
+    # Add statistics text box
     stats_text = (
         f"Statistics:\n"
         f"Mean: {np.mean(durations):.2f}s\n"
@@ -89,12 +116,21 @@ def create_duration_plot_on_axis(ax, task_name, durations, stats):
     add_stats_box(ax, stats_text)
 
 def create_requests_plot_on_axis(ax, task_name, requests):
+    """
+    Creates a histogram of requests per second
+    
+    Args:
+        ax: matplotlib axis object
+        task_name: Name of the task
+        requests: List of request counts per second
+    """
     if requests:
         sns.histplot(requests, bins=range(max(requests) + 2), ax=ax)
         ax.set_title(f'Requests per Second - {task_name}')
         ax.set_xlabel('Number of Requests')
         ax.set_ylabel('Frequency (Seconds)')
         
+        # Add statistics text box
         request_stats = (
             f"Request Stats:\n"
             f"Mean: {np.mean(requests):.2f}\n"
@@ -106,6 +142,7 @@ def create_requests_plot_on_axis(ax, task_name, requests):
         ax.text(0.5, 0.5, 'No request data available', ha='center', va='center')
 
 def add_stats_box(ax, stats_text):
+    """Adds a text box with statistics to the plot"""
     ax.text(0.95, 0.95, stats_text,
             transform=ax.transAxes,
             verticalalignment='top',
@@ -113,6 +150,15 @@ def add_stats_box(ax, stats_text):
             bbox=dict(facecolor='white', alpha=0.8))
 
 def calc_task_metadata(stats):
+    """
+    Calculates metadata for a task from its statistics
+    
+    Args:
+        stats: Dictionary containing task statistics
+        
+    Returns:
+        dict: Metadata including call counts and duration statistics
+    """
     durations = stats['durations']
     return {
         'total_calls': stats['total_calls'],
@@ -122,7 +168,12 @@ def calc_task_metadata(stats):
     }
 
 def print_analysis_summary(task_metadata):
-    """Print a detailed summary of the analysis"""
+    """
+    Prints a formatted summary of the analysis results
+    
+    Args:
+        task_metadata: Dictionary containing task statistics
+    """
     print("\nFunction Analysis Summary:")
     print("-" * 80)
     
@@ -135,8 +186,9 @@ def print_analysis_summary(task_metadata):
         print(f"Max Duration: {meta['max_duration']:.2f}s")
         print("-" * 40)
 
+# Main execution block
 if __name__ == "__main__":
-    # Example usage
+    # Define task weights for function mapping
     tasks = {
         'index': 1,
         'setCurrency': 2,
@@ -146,11 +198,9 @@ if __name__ == "__main__":
         'checkout': 1
     }
     
+    # Process trace file and create visualizations
     mapping_result = create_function_mapping('/users/Jch270/zero-scaling/AzureFunctionsInvocationTrace.txt', tasks)
     fig, metadata = analyze_function_patterns(mapping_result)
-    # fig = analyze_requests_over_time(mapping_result['sorted_events'])
     print_analysis_summary(metadata)
-    
-    # Save visualization
     plt.savefig('function_analysis.png', dpi=300, bbox_inches='tight')
     print("\nAnalysis visualization saved as 'function_analysis.png'")

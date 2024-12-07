@@ -34,6 +34,6 @@ echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.
 sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
-sudo kubeadm join 10.10.1.1:6443 --token ptkt98.qxjupi8z7pral3xr \
-        --discovery-token-ca-cert-hash sha256:e67622ff4e137bad503015fdda2c95c1a06057bafa783f16d9d45040719227a3   \
+sudo kubeadm join 10.10.1.1:6443 --token gohbi0.6b2u7cpcva3em59q \
+        --discovery-token-ca-cert-hash sha256:399652661fe596aaff8452034732b9f918a64d58deff23dd3f0ada557622b4ba    \
     --cri-socket=unix:///var/run/cri-dockerd.sock

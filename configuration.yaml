@@ -12,7 +12,7 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
+        autoscaling.knative.dev/metric: "rps"  
         autoscaling.knative.dev/target: "100"
     spec:
       containerConcurrency: 30
@@ -70,7 +70,6 @@ spec:
         autoscaling.knative.dev/maxScale: "15"
         autoscaling.knative.dev/metric: "rps"  
         autoscaling.knative.dev/target: "100"
-        # autoscaling.knative.dev/window: "6s" 
     spec:
       containerConcurrency: 30
       containers:
@@ -122,9 +121,9 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/target: "100"
+      
     spec:
       containerConcurrency: 30
       containers:
@@ -143,17 +142,17 @@ spec:
         # - name: PORT
         #   value: "5050"
         - name: PRODUCT_CATALOG_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: SHIPPING_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: PAYMENT_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: EMAIL_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: CURRENCY_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: CART_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: PRODUCT_CATALOG_SERVICE_URL
           value: "kn-productcatalogservice.default.127.0.0.1.sslip.io"
         - name: SHIPPING_SERVICE_URL
@@ -198,9 +197,8 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/target: "100"
     spec:
       containerConcurrency: 30
       containers:
@@ -250,9 +248,8 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/target: "100"
     spec:
       containerConcurrency: 30
       containers:
@@ -302,9 +299,8 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "2"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/target: "100"  
     spec:
       containerConcurrency: 100
       containers:
@@ -332,19 +328,19 @@ spec:
         # - name: PORT
         #   value: "8080"
         - name: PRODUCT_CATALOG_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: CURRENCY_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: CART_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: RECOMMENDATION_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: SHIPPING_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: CHECKOUT_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: AD_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: PRODUCT_CATALOG_SERVICE_URL
           value: "kn-productcatalogservice.default.127.0.0.1.sslip.io"
         - name: CURRENCY_SERVICE_URL
@@ -397,9 +393,8 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/target: "100"
     spec:
       containerConcurrency: 30
       containers:
@@ -449,9 +444,8 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/target: "100"
     spec:
       containerConcurrency: 30
       containers:
@@ -501,9 +495,8 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"
+        autoscaling.knative.dev/target: "100"
     spec:
       containerConcurrency: 30
       containers:
@@ -524,7 +517,7 @@ spec:
         # - name: PORT
         #   value: "8080"
         - name: PRODUCT_CATALOG_SERVICE_ADDR
-          value: "128.110.96.104:31470"
+          value: "128.110.96.97:31882"
         - name: PRODUCT_CATALOG_SERVICE_URL
           value: "kn-productcatalogservice.default.127.0.0.1.sslip.io"
         - name: DISABLE_TRACING
@@ -559,9 +552,9 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "15"
-        autoscaling.knative.dev/metric: "rps"  # Use requests per second as scaling metric
-        autoscaling.knative.dev/target: "100"  # Scale when reaching 50 RPS
-        #autoscaling.knative.dev/window: "6s"  # Shorter window for faster scaling
+        autoscaling.knative.dev/metric: "rps"  
+        autoscaling.knative.dev/target: "100"  
+    
 
     spec:
       containerConcurrency: 30
